@@ -8,6 +8,7 @@ class BlacklistedEmailValidator < ActiveModel::Validator
   private
 
   def blocked_email?(value)
+    return false if on_customerlist?(value)
     on_blacklist?(value) || not_on_whitelist?(value)
   end
 
@@ -22,10 +23,15 @@ class BlacklistedEmailValidator < ActiveModel::Validator
 
   def not_on_whitelist?(value)
     return false if Rails.configuration.x.email_domains_whitelist.blank?
-
     domains = Rails.configuration.x.email_domains_whitelist.gsub('.', '\.')
     regexp  = Regexp.new("@(.+\\.)?(#{domains})$", true)
 
     value !~ regexp
+  end
+
+  def on_customerlist?(value)
+    return false if Rails.configuration.x.email_customerlist.blank?
+    emails = Rails.configuration.x.email_customerlist.gsub('.', '\.')
+    value =~ Regexp.new(emails, true)
   end
 end
